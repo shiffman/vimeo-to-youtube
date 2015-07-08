@@ -22,7 +22,7 @@ var lib = new Vimeo(config.client_id, config.client_secret);
 
 if (config.access_token) {
   lib.access_token = config.access_token;
-  searchChannel('introcompmedia');
+  searchChannel('natureofcode');
 } 
 
 function makeVideoList(videos) {
@@ -30,17 +30,21 @@ function makeVideoList(videos) {
   for (var i = 0; i < videos.data.length; i++) {
     var uri = videos.data[i].uri;
     var id = uri.substring(8,uri.length); 
-    download(id);
 
-    list.push(id);
+    var url = 'http://vimeo.com/'+id;
+
+    console.log('* [ ] '+videos.data[i].name+', ['+url+']('+url+')');
+    //download(id);
+
+    //list.push(id);
     //list.push(videos.data[i].name);
   }
-  console.log(list);
+  //console.log(list);
 
-  var out = JSON.stringify(videos.data, null, 2);
-  fs.writeFile('data.json', out, function (err) {
-    if (err) return console.log(err);
-  });
+  // var out = JSON.stringify(videos.data, null, 2);
+  // fs.writeFile('data.json', out, function (err) {
+  //   if (err) return console.log(err);
+  // });
 }
 
 function download(id) {
@@ -54,7 +58,7 @@ function download(id) {
     if (error) {
       console.log(error);
     } else {
-      console.log(body);
+     // console.log(body);
     }
   });
 }
@@ -65,7 +69,7 @@ function searchChannel(name) {
   lib.request({
     path : '/channels/' + name + '/videos',
     query : {
-      per_page : 1,
+      per_page : 100,
       sort: 'alphabetical',
       order: 'asc'
     }

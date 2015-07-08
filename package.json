@@ -1,3 +1,13 @@
 {
-
+  "name": "Vimeo-to-Youtube",
+  "version": "0.0.0",
+  "description": "Downloading from Vimeo, uploading to Youtube.",
+  "dependencies": {
+    "googleapis": "*",
+    "youtube-api": "*",
+    "r-json": "*",
+    "lien": "*",
+    "bug-killer": "*",
+    "opn": "*"
+  }
 }
