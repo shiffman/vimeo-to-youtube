@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "description": "Downloading from Vimeo, uploading to Youtube.",
   "dependencies": {
+    "vimeo": "*",
     "googleapis": "*",
     "youtube-api": "*",
     "r-json": "*",
