@@ -56,7 +56,7 @@ server.page.add("/oauth2callback", function (lien) {
     oauth.getToken(lien.search.code, function(err, tokens) {
         
         if (err) { 
-          lien(err, 400); 
+          lien.end(err, 400); 
           return Logger.log(err); 
         }
         
@@ -96,8 +96,9 @@ server.page.add("/oauth2callback", function (lien) {
                 }
             }, function (err, data) {
                 if (err) { 
-                  return lien.end(err);
-                } 
+                  return lien.end(err, 400);
+                }
+                console.log(data);
             });
           }
         });
