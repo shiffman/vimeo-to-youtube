@@ -20,6 +20,8 @@ var Logger = require("bug-killer");
 var Opn = require("opn");
 var ReadLine = require('readline');
 
+
+
 // Constants
 // I downloaded the file from OAuth2 -> Download JSON
 const CREDENTIALS = ReadJson("./credentials.json");
@@ -57,29 +59,45 @@ server.page.add("/oauth2callback", function (lien) {
     oauth.getToken(lien.search.code, function(err, tokens) {
         if (err) { lien(err, 400); return Logger.log(err); }
         oauth.setCredentials(tokens);
-        Youtube.videos.insert({
-            resource: {
-                // Video title and description
-                snippet: {
-                    title: "Testing YouTube API NodeJS module"
-                  , description: "Test video upload via YouTube API"
-                }
-                // I don't want to spam my subscribers
-              , status: {
-                    privacyStatus: "public"
-                }
-            }
-            // This is for the callback function
-          , part: "snippet,status"
 
-            // Create the readable stream to upload the video
-          , media: {
-                body: Fs.createReadStream("transit.mov")
+        ReadJson('./icm.json', function(error, data){
+
+          for (var n = 0; n < 1; n++) {
+            var video = data[n];
+            console.log(video.name);
+            console.log(video.description);
+            var tags = [];
+            for (var i = 0; i < video.tags.length; i++) {
+              tags.push(video.tags[i].tag);
             }
-        }, function (err, data) {
-            if (err) { return lien.end(err, 400); }
-            lien.end(data);
-            console.log("finished?");
-        });
+            console.log(tags);
+
+            Youtube.videos.insert({
+                resource: {
+                    snippet: {
+                        title: video.name
+                      , description: video.description
+                      , tags: tags
+                    }
+                  , status: {
+                        privacyStatus: "public"
+                        embeddable: "public"
+                    }
+                  , recordingDetails: {
+                        recordingDate: video.created_time 
+                  }
+                }
+                // This is for the callback function
+              , part: "snippet,status,recordingDetails"
+              , media: {
+                    body: Fs.createReadStream("transit.mov")
+                }
+            }, function (err, data) {
+                if (err) { return lien.end(err, 400); }
+                lien.end(data);
+            });
+
+          });
+        }
     });
 });

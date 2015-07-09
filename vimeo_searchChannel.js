@@ -22,7 +22,7 @@ var lib = new Vimeo(config.client_id, config.client_secret);
 
 if (config.access_token) {
   lib.access_token = config.access_token;
-  searchChannel('natureofcode');
+  searchChannel('introcompmedia');
 } 
 
 function makeVideoList(videos) {
@@ -33,7 +33,7 @@ function makeVideoList(videos) {
 
     var url = 'http://vimeo.com/'+id;
 
-    console.log('* [ ] '+videos.data[i].name+', ['+url+']('+url+')');
+    //console.log('* [ ] '+videos.data[i].name+', ['+url+']('+url+')');
     //download(id);
 
     //list.push(id);
@@ -41,10 +41,10 @@ function makeVideoList(videos) {
   }
   //console.log(list);
 
-  // var out = JSON.stringify(videos.data, null, 2);
-  // fs.writeFile('data.json', out, function (err) {
-  //   if (err) return console.log(err);
-  // });
+  var out = JSON.stringify(videos.data, null, 2);
+  fs.writeFile('icm.json', out, function (err) {
+    if (err) return console.log(err);
+  });
 }
 
 function download(id) {
