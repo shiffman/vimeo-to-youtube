@@ -64,16 +64,16 @@ server.page.add("/oauth2callback", function (lien) {
 
         ReadJson('./icm.json', function(error, data){
 
-          for (var n = 0; n < 1; n++) {
-            console.log('uploading video: ' + n);
+          for (var n = 0; n < 10; n++) {
+            console.log('starting upload for video: ' + n);
             var video = data[n];
-            //console.log(video.name);
-            //console.log(video.description);
             var tags = [];
             for (var i = 0; i < video.tags.length; i++) {
               tags.push(video.tags[i].tag);
             }
-            //console.log(tags);
+            console.log(video.created_time);
+            var ind = video.created_time.indexOf('+');
+            var thedate = video.created_time.substring(0,ind) + '.000Z';
 
             Youtube.videos.insert({
                 resource: {
@@ -83,25 +83,29 @@ server.page.add("/oauth2callback", function (lien) {
                       , tags: tags
                     }
                   , status: {
-                        privacyStatus: "public"
+                        privacyStatus: "private"
                   ,     embeddable: "public"
                     }
                   , recordingDetails: {
-                        recordingDate: '2013-07-16T18:05:33.000Z'
+                        recordingDate: thedate
                   }
                 }
                 // This is for the callback function
               , part: "snippet,status,recordingDetails"
               , media: {
-                    body: Fs.createReadStream('0.0.mov')
+                    body: Fs.createReadStream('transit.mov')
                 }
-            }, function (err, data) {
-                if (err) { 
-                  return lien.end(err, 400);
-                }
-                console.log('finished video: ' + n);
-            });
+            }, callbackit(n));
           }
         });
     });
 });
+
+function callbackit(n) {
+  return function (err, data) {
+    if (err) { 
+      return lien.end(err, 400);
+    }
+    console.log('finished video: ' + n);
+  };
+}

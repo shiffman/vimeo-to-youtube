@@ -2,3 +2,4 @@ config.json
 credentials.json
 node_modules/
 .DS_Store
+*.mov
