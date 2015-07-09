@@ -65,19 +65,20 @@ server.page.add("/oauth2callback", function (lien) {
         ReadJson('./icm.json', function(error, data){
 
           for (var n = 0; n < 1; n++) {
+            console.log('uploading video: ' + n);
             var video = data[n];
-            console.log(video.name);
-            console.log(video.description);
+            //console.log(video.name);
+            //console.log(video.description);
             var tags = [];
             for (var i = 0; i < video.tags.length; i++) {
               tags.push(video.tags[i].tag);
             }
-            console.log(tags);
+            //console.log(tags);
 
             Youtube.videos.insert({
                 resource: {
                     snippet: {
-                        title: video.name + '1'
+                        title: video.name + '2'
                       , description: video.description
                       , tags: tags
                     }
@@ -98,7 +99,7 @@ server.page.add("/oauth2callback", function (lien) {
                 if (err) { 
                   return lien.end(err, 400);
                 }
-                console.log(data);
+                console.log('finished video: ' + n);
             });
           }
         });
