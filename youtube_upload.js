@@ -1,17 +1,13 @@
 /**
- * This script uploads a video (specifically `video.mp4` from the current
- * directory) to YouTube,
+ * 
+ * This code is based on examples from @IonicaBizau youtube-api
  *
- * To run this script you have to create OAuth2 credentials and download them
- * as JSON and replace the `credentials.json` file. Then install the
- * dependencies:
- *
- * npm i r-json lien opn bug-killer
- *
- * Don't forget to run an `npm i` to install the `youtube-api` dependencies.
- * */
+ * Requires you have to create OAuth2 credentials and download them
+ * as JSON and replace the `credentials.json` file.
+ * 
+ */
 
-// Depende3ncies
+// dependencies
 var Youtube = require("youtube-api");
 var Fs = require("fs");
 var ReadJson = require("r-json");
