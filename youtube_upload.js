@@ -21,6 +21,7 @@ var Opn = require("opn");
 var ReadLine = require('readline');
 
 
+var path = '/Users/danielshiffman/Dropbox/File\ requests/introcompmedia_videos/'
 
 // Constants
 // I downloaded the file from OAuth2 -> Download JSON
@@ -57,7 +58,12 @@ Opn(oauth.generateAuthUrl({
 server.page.add("/oauth2callback", function (lien) {
     Logger.log("Trying to get the token using the following code: " + lien.search.code);
     oauth.getToken(lien.search.code, function(err, tokens) {
-        if (err) { lien(err, 400); return Logger.log(err); }
+        
+        if (err) { 
+          lien(err, 400); 
+          return Logger.log(err); 
+        }
+        
         oauth.setCredentials(tokens);
 
         ReadJson('./icm.json', function(error, data){
@@ -75,29 +81,29 @@ server.page.add("/oauth2callback", function (lien) {
             Youtube.videos.insert({
                 resource: {
                     snippet: {
-                        title: video.name
+                        title: video.name + '1'
                       , description: video.description
                       , tags: tags
                     }
                   , status: {
                         privacyStatus: "public"
-                        embeddable: "public"
+                  ,     embeddable: "public"
                     }
                   , recordingDetails: {
-                        recordingDate: video.created_time 
+                        recordingDate: '2013-07-16T18:05:33.000Z'
                   }
                 }
                 // This is for the callback function
               , part: "snippet,status,recordingDetails"
               , media: {
-                    body: Fs.createReadStream("transit.mov")
+                    body: Fs.createReadStream('0.0.mov')
                 }
             }, function (err, data) {
-                if (err) { return lien.end(err, 400); }
-                lien.end(data);
+                if (err) { 
+                  return lien.end(err);
+                } 
             });
-
-          });
-        }
+          }
+        });
     });
 });
