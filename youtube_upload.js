@@ -35,7 +35,7 @@ var stdIn = ReadLine.createInterface({
   , output: process.stdout
 });
 
-var start = 2;
+var start = 3;
 
 // Authenticate
 // You can access the Youtube resources via OAuth2 only.
@@ -71,12 +71,10 @@ server.page.add("/oauth2callback", function (lien) {
 });
 
 
+var progress;
 
 function uploadNextVideo(data, index) {
   var video = data[index];
-  console.log(index);
-  console.log(video.name);
-  console.log(video.tags);
   var tags = [];
   for (var i = 0; i < video.tags.length; i++) {
     tags.push(video.tags[i].tag);
@@ -84,11 +82,11 @@ function uploadNextVideo(data, index) {
   var ind = video.created_time.indexOf('+');
   var thedate = video.created_time.substring(0,ind) + '.000Z';
   var filename = video.name.match(/^\d+\.\d+/) + '.mov';
-  console.log('starting upload for video: ' + filename + ' : ' + index + ' ', tags);
 
   var newname = video.name.replace(/ICM/,'Learning Processing');
+  console.log('starting upload for video: ' + filename + ' : ' + newname + ' : ' + index + ' ' + tags);
 
-  Youtube.videos.insert({
+  var ytReq = Youtube.videos.insert({
       resource: {
           snippet: {
               title: newname
@@ -107,12 +105,19 @@ function uploadNextVideo(data, index) {
     , media: {
           body: Fs.createReadStream(path + filename)
       }
-  }, function (err, data) {
+  }, function (err, output) {
     if (err) { 
       return lien.end(err, 400);
     }
     console.log('finished video: ' + filename + ' : ' + index);
     index++;
+    clearInterval(progress);
     uploadNextVideo(data, index);
   });
+
+
+  progress = setInterval(function () {
+    var bytesSoFar = ytReq.req.connection._bytesDispatched;
+    console.log('status of ' + filename + ': ' + ytReq.req.connection._bytesDispatched/1024);
+  }, 10000);
 }
