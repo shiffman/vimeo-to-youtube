@@ -35,7 +35,7 @@ var stdIn = ReadLine.createInterface({
   , output: process.stdout
 });
 
-var currentVideo = 0;
+var start = 2;
 
 // Authenticate
 // You can access the Youtube resources via OAuth2 only.
@@ -65,15 +65,18 @@ server.page.add("/oauth2callback", function (lien) {
         oauth.setCredentials(tokens);
 
         ReadJson('./icm.json', function(error, data){
-          uploadNextVideo(data);
+          uploadNextVideo(data, start);
         });
     });
 });
 
 
 
-function uploadNextVideo(data) {
-  var video = data[currentVideo];
+function uploadNextVideo(data, index) {
+  var video = data[index];
+  console.log(index);
+  console.log(video.name);
+  console.log(video.tags);
   var tags = [];
   for (var i = 0; i < video.tags.length; i++) {
     tags.push(video.tags[i].tag);
@@ -81,12 +84,14 @@ function uploadNextVideo(data) {
   var ind = video.created_time.indexOf('+');
   var thedate = video.created_time.substring(0,ind) + '.000Z';
   var filename = video.name.match(/^\d+\.\d+/) + '.mov';
-  console.log('starting upload for video: ' + filename + ' : ' + currentVideo);
+  console.log('starting upload for video: ' + filename + ' : ' + index + ' ', tags);
+
+  var newname = video.name.replace(/ICM/,'Learning Processing');
 
   Youtube.videos.insert({
       resource: {
           snippet: {
-              title: video.name
+              title: newname
             , description: video.description
             , tags: tags
           }
@@ -98,7 +103,6 @@ function uploadNextVideo(data) {
               recordingDate: thedate
         }
       }
-      // This is for the callback function
     , part: "snippet,status,recordingDetails"
     , media: {
           body: Fs.createReadStream(path + filename)
@@ -107,8 +111,8 @@ function uploadNextVideo(data) {
     if (err) { 
       return lien.end(err, 400);
     }
-    console.log('finished video: ' + filename + ' : ' + currentVideo);
-    currentVideo++;
-    uploadNextVideo(data);
+    console.log('finished video: ' + filename + ' : ' + index);
+    index++;
+    uploadNextVideo(data, index);
   });
 }
