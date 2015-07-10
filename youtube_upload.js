@@ -64,21 +64,21 @@ server.page.add("/oauth2callback", function (lien) {
 
         ReadJson('./icm.json', function(error, data){
 
-          for (var n = 0; n < 10; n++) {
-            console.log('starting upload for video: ' + n);
+          for (var n = 0; n < data.length; n++) {
             var video = data[n];
             var tags = [];
             for (var i = 0; i < video.tags.length; i++) {
               tags.push(video.tags[i].tag);
             }
-            console.log(video.created_time);
             var ind = video.created_time.indexOf('+');
             var thedate = video.created_time.substring(0,ind) + '.000Z';
+            var filename = video.name.match(/^\d+\.\d+/) + '.mov';
+            console.log('starting upload for video: ' + filename);
 
             Youtube.videos.insert({
                 resource: {
                     snippet: {
-                        title: video.name + '2'
+                        title: video.name
                       , description: video.description
                       , tags: tags
                     }
@@ -93,19 +93,19 @@ server.page.add("/oauth2callback", function (lien) {
                 // This is for the callback function
               , part: "snippet,status,recordingDetails"
               , media: {
-                    body: Fs.createReadStream('transit.mov')
+                    body: Fs.createReadStream(path + filename)
                 }
-            }, callbackit(n));
+            }, callbackit(filename));
           }
         });
     });
 });
 
-function callbackit(n) {
+function callbackit(filename) {
   return function (err, data) {
     if (err) { 
       return lien.end(err, 400);
     }
-    console.log('finished video: ' + n);
+    console.log('finished video: ' + filename);
   };
 }
