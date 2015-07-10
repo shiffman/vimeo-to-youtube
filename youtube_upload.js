@@ -52,7 +52,6 @@ Opn(oauth.generateAuthUrl({
   , scope: ["https://www.googleapis.com/auth/youtube.upload"]
 }));
 
-var data;
 
 // Handle oauth2 callback
 server.page.add("/oauth2callback", function (lien) {
@@ -66,63 +65,72 @@ server.page.add("/oauth2callback", function (lien) {
         
         oauth.setCredentials(tokens);
 
+        var data;
+        var progress;
+
         ReadJson('./icm.json', function(error, result){
           data = result;
           uploadNextVideo(start);
         });
+
+
+        function uploadNextVideo(index) {
+          var video = data[index];
+          var tags = [];
+          for (var i = 0; i < video.tags.length; i++) {
+            tags.push(video.tags[i].tag);
+          }
+          var ind = video.created_time.indexOf('+');
+          var thedate = video.created_time.substring(0,ind) + '.000Z';
+          var filename = video.name.match(/^\d+\.\d+/) + '.mov';
+
+          var newname = video.name.replace(/ICM/,'Learning Processing');
+          console.log('starting upload for video: ' + filename + ' : ' + newname + ' : ' + index + ' ' + tags);
+
+          var ytReq = Youtube.videos.insert({
+              resource: {
+                  snippet: {
+                      title: newname
+                    , description: video.description
+                    , tags: tags
+                  }
+                , status: {
+                      privacyStatus: "private"
+                ,     embeddable: "public"
+                  }
+                , recordingDetails: {
+                      recordingDate: thedate
+                }
+              }
+            , part: "snippet,status,recordingDetails"
+            , media: {
+                  //body: Fs.createReadStream('transit.mov')
+                  body: Fs.createReadStream(path + filename)
+              }
+          }, function (err, output) {
+            if (err) { 
+              console.log('ERROR');
+              console.log(err);
+              //return lien.end(err, 400);
+            }
+            console.log('finished video: ' + filename + ' : ' + index);
+            index++;
+            // hack to skip already uploaded video
+            if (index == 5) {
+              index = 6;
+            }
+            clearInterval(progress);
+            uploadNextVideo(index);
+          });
+
+
+          progress = setInterval(function () {
+            var bytesSoFar = ytReq.req.connection._bytesDispatched;
+            console.log('status of ' + filename + ': ' + Math.floor(ytReq.req.connection._bytesDispatched/(1024*1024)));
+          }, 5000);
+        }
     });
 });
 
 
-var progress;
 
-function uploadNextVideo(index) {
-  var video = data[index];
-  var tags = [];
-  for (var i = 0; i < video.tags.length; i++) {
-    tags.push(video.tags[i].tag);
-  }
-  var ind = video.created_time.indexOf('+');
-  var thedate = video.created_time.substring(0,ind) + '.000Z';
-  var filename = video.name.match(/^\d+\.\d+/) + '.mov';
-
-  var newname = video.name.replace(/ICM/,'Learning Processing');
-  console.log('starting upload for video: ' + filename + ' : ' + newname + ' : ' + index + ' ' + tags);
-
-  var ytReq = Youtube.videos.insert({
-      resource: {
-          snippet: {
-              title: newname
-            , description: video.description
-            , tags: tags
-          }
-        , status: {
-              privacyStatus: "private"
-        ,     embeddable: "public"
-          }
-        , recordingDetails: {
-              recordingDate: thedate
-        }
-      }
-    , part: "snippet,status,recordingDetails"
-    , media: {
-          body: Fs.createReadStream(path + filename)
-      }
-  }, function (err, output) {
-    if (err) { 
-      console.log('ERROR');
-      console.log(err);
-      //return lien.end(err, 400);
-    }
-    console.log('finished video: ' + filename + ' : ' + index);
-    index++;
-    clearInterval(progress);
-    uploadNextVideo(index);
-  });
-
-
-  progress = setInterval(function () {
-    var bytesSoFar = ytReq.req.connection._bytesDispatched;
-    console.log('status of ' + filename + ': ' + Math.floor(ytReq.req.connection._bytesDispatched/(1024*1024)));
-  }, 10000);
-}
