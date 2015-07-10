@@ -35,7 +35,7 @@ var stdIn = ReadLine.createInterface({
   , output: process.stdout
 });
 
-var start = 3;
+var start = 4;
 
 // Authenticate
 // You can access the Youtube resources via OAuth2 only.
@@ -52,6 +52,8 @@ Opn(oauth.generateAuthUrl({
   , scope: ["https://www.googleapis.com/auth/youtube.upload"]
 }));
 
+var data;
+
 // Handle oauth2 callback
 server.page.add("/oauth2callback", function (lien) {
     Logger.log("Trying to get the token using the following code: " + lien.search.code);
@@ -64,8 +66,9 @@ server.page.add("/oauth2callback", function (lien) {
         
         oauth.setCredentials(tokens);
 
-        ReadJson('./icm.json', function(error, data){
-          uploadNextVideo(data, start);
+        ReadJson('./icm.json', function(error, result){
+          data = result;
+          uploadNextVideo(start);
         });
     });
 });
@@ -73,7 +76,7 @@ server.page.add("/oauth2callback", function (lien) {
 
 var progress;
 
-function uploadNextVideo(data, index) {
+function uploadNextVideo(index) {
   var video = data[index];
   var tags = [];
   for (var i = 0; i < video.tags.length; i++) {
@@ -107,17 +110,19 @@ function uploadNextVideo(data, index) {
       }
   }, function (err, output) {
     if (err) { 
-      return lien.end(err, 400);
+      console.log('ERROR');
+      console.log(err);
+      //return lien.end(err, 400);
     }
     console.log('finished video: ' + filename + ' : ' + index);
     index++;
     clearInterval(progress);
-    uploadNextVideo(data, index);
+    uploadNextVideo(index);
   });
 
 
   progress = setInterval(function () {
     var bytesSoFar = ytReq.req.connection._bytesDispatched;
-    console.log('status of ' + filename + ': ' + ytReq.req.connection._bytesDispatched/1024);
+    console.log('status of ' + filename + ': ' + Math.floor(ytReq.req.connection._bytesDispatched/(1024*1024)));
   }, 10000);
 }
