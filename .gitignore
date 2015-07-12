@@ -1,5 +1,7 @@
 config.json
+client_secrets.json
 credentials.json
+upload.py-oauth2.json
 node_modules/
 .DS_Store
 *.mov
