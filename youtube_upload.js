@@ -35,7 +35,7 @@ var stdIn = ReadLine.createInterface({
   , output: process.stdout
 });
 
-var start = 4;
+var start = 8;
 
 // Authenticate
 // You can access the Youtube resources via OAuth2 only.
@@ -125,6 +125,9 @@ server.page.add("/oauth2callback", function (lien) {
 
 
           progress = setInterval(function () {
+            // Keep setting credentials?
+            oauth.setCredentials(tokens);
+
             var bytesSoFar = ytReq.req.connection._bytesDispatched;
             console.log('status of ' + filename + ': ' + Math.floor(ytReq.req.connection._bytesDispatched/(1024*1024)));
           }, 5000);
