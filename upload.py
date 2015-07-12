@@ -1,3 +1,6 @@
+# This is directly from
+# https://developers.google.com/youtube/v3/guides/uploading_a_video
+
 #!/usr/bin/python
 
 import httplib
