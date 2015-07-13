@@ -1,138 +1,114 @@
-/**
- * 
- * This code is based on examples from @IonicaBizau youtube-api
- *
- * Requires you have to create OAuth2 credentials and download them
- * as JSON and replace the `credentials.json` file.
- * 
- */
 
-// dependencies
-var Youtube = require("youtube-api");
-var Fs = require("fs");
-var ReadJson = require("r-json");
-var Lien = require("lien");
-var Logger = require("bug-killer");
-var Opn = require("opn");
-var ReadLine = require('readline');
+var googleauth = require('google-auth-cli');
+var ResumableUpload = require('node-youtube-resumable-upload'); 
+var google_secrets = require('./client_secrets.json');
+var icm = require('./icm.json');
 
-
+var tokens;
 var path = '/Users/danielshiffman/Dropbox/File\ requests/introcompmedia_videos/'
-
-// Constants
-// I downloaded the file from OAuth2 -> Download JSON
-const CREDENTIALS = ReadJson("./credentials.json");
-
-// Init lien server
-var server = new Lien({
-    host: "localhost"
-  , port: 5000
-});
-
-
-var stdIn = ReadLine.createInterface({
-    input: process.stdin
-  , output: process.stdout
-});
 
 var start = 8;
 
-// Authenticate
-// You can access the Youtube resources via OAuth2 only.
-// https://developers.google.com/youtube/v3/guides/moving_to_oauth#service_accounts
-var oauth = Youtube.authenticate({
-    type: "oauth"
-  , client_id: CREDENTIALS.web.client_id
-  , client_secret: CREDENTIALS.web.client_secret
-  , redirect_url: CREDENTIALS.web.redirect_uris[0]
-});
+var uploadNext = function(index) {
+  var video = icm[index];
+  var tags = [];
+  for (var i = 0; i < video.tags.length; i++) {
+    tags.push(video.tags[i].tag);
+  }
+  var ind = video.created_time.indexOf('+');
+  var thedate = video.created_time.substring(0,ind) + '.000Z';
+  var filename = video.name.match(/^\d+\.\d+/) + '.mov';
 
-Opn(oauth.generateAuthUrl({
-    access_type: "offline"
-  , scope: ["https://www.googleapis.com/auth/youtube.upload"]
-}));
+  var newname = video.name.replace(/ICM/,'Learning Processing');
+  console.log('starting upload for video: ' + filename + ' : ' + newname + ' : ' + index + ' ' + tags);
 
+  var metadata = {
+    snippet: { 
+      title: newname, 
+      description: video.description,
+      tags: tags,
+      // thumbnails: {
+      //   high: {
+      //     url: video.pictures.sizes[5].link,
+      //     width: video.pictures.sizes[5].width,
+      //     height: video.pictures.sizes[5].height
+      //   }
+      // }
+    }, 
+    status: {
+      privacyStatus: "private",
+      embeddable: "public"
+    }, 
+    // contentDetails: {
+      
+    // },
+    recordingDetails: {
+      recordingDate: thedate
+    }
+  };
 
-// Handle oauth2 callback
-server.page.add("/oauth2callback", function (lien) {
-    Logger.log("Trying to get the token using the following code: " + lien.search.code);
-    oauth.getToken(lien.search.code, function(err, tokens) {
-        
-        if (err) { 
-          lien.end(err, 400); 
-          return Logger.log(err); 
-        }
-        
-        oauth.setCredentials(tokens);
+  console.log(metadata);
 
-        var data;
-        var progress;
+  var resumableUpload = new ResumableUpload(); //create new ResumableUpload
+  resumableUpload.tokens  = tokens;
+  resumableUpload.filepath  = path + filename;
+  resumableUpload.metadata  = metadata;
+  resumableUpload.monitor = true;
+  resumableUpload.retry   = -1;  //infinite retries, change to desired amount
+  resumableUpload.initUpload();
+  
+  resumableUpload.on('progress', function(progress) {
+    var now = new Date().getTime();
+    var timepassed = Math.floor((now - starttime)/1000);
+    var values = progress.split('/');
+    var mbsofar = Math.floor(Number(values[0])/(1024*1024));
+    var totalmb = Math.floor(Number(values[1])/(1024*1024));
+    var percent = Math.floor(mbsofar/totalmb)*100;
+    console.log(mbsofar + "mb out of " + totalmb + "mb, " + percent + "%  " + timepassed + " seconds");
+  });
+  resumableUpload.on('error', function(error) {
+    console.log("reusumable upload error");
+    console.log(error);
+  });
+  resumableUpload.on('success', function(success) {
+    console.log('finished!');
+    console.log(success);
+    if (index < icm.length) {
+      uploadNext(index + 1);
+    }
+  });
+}
 
-        ReadJson('./icm.json', function(error, result){
-          data = result;
-          uploadNextVideo(start);
-        });
+var getTokens = function(callback) {
+  googleauth({
+      access_type: 'offline',
+      scope: 'https://www.googleapis.com/auth/youtube.upload' //can do just 'youtube', but 'youtube.upload' is more restrictive
+  },
+  {   client_id: google_secrets.installed.client_id, //replace with your client_id and _secret
+      client_secret: google_secrets.installed.client_secret,
+      timeout: 240 * 60 * 1000, // Give each upload four hours, google might not allow more than an hour?
+      port: 3000
+  },
+  function(err, authClient, tokens) {
+    if (err) {
+      console.log("-------Error!------------");
+      console.log(err);
+      console.log("-------------------------");
+    }
+    callback(tokens);
+    return;
+  });
+};
 
+var starttime;
 
-        function uploadNextVideo(index) {
-          var video = data[index];
-          var tags = [];
-          for (var i = 0; i < video.tags.length; i++) {
-            tags.push(video.tags[i].tag);
-          }
-          var ind = video.created_time.indexOf('+');
-          var thedate = video.created_time.substring(0,ind) + '.000Z';
-          var filename = video.name.match(/^\d+\.\d+/) + '.mov';
-
-          var newname = video.name.replace(/ICM/,'Learning Processing');
-          console.log('starting upload for video: ' + filename + ' : ' + newname + ' : ' + index + ' ' + tags);
-
-          var ytReq = Youtube.videos.insert({
-              resource: {
-                  snippet: {
-                      title: newname
-                    , description: video.description
-                    , tags: tags
-                  }
-                , status: {
-                      privacyStatus: "private"
-                ,     embeddable: "public"
-                  }
-                , recordingDetails: {
-                      recordingDate: thedate
-                }
-              }
-            , part: "snippet,status,recordingDetails"
-            , media: {
-                  //body: Fs.createReadStream('transit.mov')
-                  body: Fs.createReadStream(path + filename)
-              }
-          }, function (err, output) {
-            if (err) { 
-              console.log('ERROR');
-              console.log(err);
-              //return lien.end(err, 400);
-            }
-            console.log('finished video: ' + filename + ' : ' + index);
-            index++;
-            // hack to skip already uploaded video
-            if (index == 5) {
-              index = 6;
-            }
-            clearInterval(progress);
-            uploadNextVideo(index);
-          });
-
-
-          progress = setInterval(function () {
-            // Keep setting credentials?
-            oauth.setCredentials(tokens);
-
-            var bytesSoFar = ytReq.req.connection._bytesDispatched;
-            console.log('status of ' + filename + ': ' + Math.floor(ytReq.req.connection._bytesDispatched/(1024*1024)));
-          }, 5000);
-        }
-    });
+getTokens(function(result) {
+  console.log('Executing get tokens to start!');
+  console.log('tokens:' + result);
+  tokens = result;
+  starttime = new Date().getTime();
+  uploadNext(start);
+  return;
 });
 
 
