@@ -3,12 +3,13 @@
   "version": "0.0.0",
   "description": "Downloading from Vimeo, uploading to Youtube.",
   "dependencies": {
-    "vimeo": "*",
-    "googleapis": "*",
-    "youtube-api": "*",
-    "r-json": "*",
-    "lien": "*",
     "bug-killer": "*",
-    "opn": "*"
+    "google-cli-auth": "0.0.1",
+    "googleapis": "*",
+    "lien": "*",
+    "opn": "*",
+    "r-json": "*",
+    "vimeo": "*",
+    "youtube-api": "*"
   }
 }
