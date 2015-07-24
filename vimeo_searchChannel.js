@@ -22,7 +22,7 @@ var lib = new Vimeo(config.client_id, config.client_secret);
 
 if (config.access_token) {
   lib.access_token = config.access_token;
-  searchChannel('introcompmedia');
+  searchChannel('natureofcode');
 } 
 
 function makeVideoList(videos) {
@@ -42,7 +42,7 @@ function makeVideoList(videos) {
   //console.log(list);
 
   var out = JSON.stringify(videos.data, null, 2);
-  fs.writeFile('icm.json', out, function (err) {
+  fs.writeFile('noc.json', out, function (err) {
     if (err) return console.log(err);
   });
 }
