@@ -7,7 +7,7 @@ var icm = require('./icm.json');
 var tokens;
 var path = '/Users/danielshiffman/Dropbox/File\ requests/introcompmedia_videos/'
 
-var start = 14;
+var start = 26;
 
 var uploadNext = function(index) {
   var video = icm[index];
