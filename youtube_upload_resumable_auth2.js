@@ -2,12 +2,12 @@
 var googleauth = require('google-cli-auth');
 var ResumableUpload = require('node-youtube-resumable-upload'); 
 var google_secrets = require('./client_secrets.json');
-var icm = require('./icm.json');
+var icm = require('./noc.json');
 
 var tokens;
 var path = '/Users/danielshiffman/Dropbox/File\ requests/introcompmedia_videos/'
 
-var start = 26;
+var start = 0;
 
 var uploadNext = function(index) {
   var video = icm[index];
@@ -17,9 +17,9 @@ var uploadNext = function(index) {
   }
   var ind = video.created_time.indexOf('+');
   var thedate = video.created_time.substring(0,ind) + '.000Z';
-  var filename = video.name.match(/^\d+\.\d+/) + '.mov';
+  var filename = video.name.match(/^(Intro )?[I1-9]+\.\d+/) + '.mov';
 
-  var newname = video.name.replace(/ICM/,'Learning Processing');
+  var newname = video.name;//video.name.replace(/ICM/,'Learning Processing');
   console.log('starting upload for video: ' + filename + ' : ' + newname + ' : ' + index + ' ' + tags);
 
   var metadata = {
